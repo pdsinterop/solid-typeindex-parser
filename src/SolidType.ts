@@ -10,25 +10,25 @@ interface SolidTypeOptions {
 }
 
 class SolidType {
-  public typeClass: string
+  public forClass: string
   public instance: string
   public otherQuads: Quad[]
 
-  constructor (typeClass, instance, options: SolidTypeOptions = {}) {
-    this.typeClass = typeClass
+  constructor (forClass: string, instance: string, options: SolidTypeOptions = {}) {
+    this.forClass = forClass
     this.instance = instance
 	this.otherQuads = options.otherQuads ? [...options.otherQuads] : []
   }
 
   clone () {
     const options = SolidType._getOptions(this)
-    return new SolidType(this.typeClass, this.instance, options)
+    return new SolidType(this.forClass, this.instance, options)
   }
 
   equals (other: SolidType) {
     return other instanceof SolidType &&
       iterableEquals(this.otherQuads, other.otherQuads) &&
-      this.typeClass === other.typeClass &&
+      this.forClass === other.forClass &&
       this.instance === other.instance
   }
 

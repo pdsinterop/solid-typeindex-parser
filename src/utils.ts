@@ -64,7 +64,8 @@ export function makeRelativeIfPossible (base: string, url: string) {
   }
 
   const basePath = baseObj.pathname.endsWith('/') ? baseObj.pathname : dirname(baseObj.pathname)
-  const relPath = relative(basePath, urlObj.pathname)
+  const relPath = relative(basePath, urlObj.pathname).replace("\\", "/")
+
   const suffix = urlObj.query + urlObj.hash
 
   return relPath.startsWith('../')

@@ -6,10 +6,6 @@ import { Quad } from 'n3'
  * @module TypeIndexDoc
  */
 
-interface TypeIndexDocOptions {
-  strict?: boolean // Throw on possible errors
-}
-
 interface AddSolidTypeOptions {
   subjectId?: string
 }
@@ -19,14 +15,16 @@ interface AddSolidTypeOptions {
  * @alias module:TypeIndexDoc
  */
 class TypeIndexDoc {
-  public readonly strict: boolean
   public solidTypes: Record<string, SolidType>
   public otherQuads: Quad[]
+  public documentTypes: string[]
+  public references: string[]
 
-  constructor ({ strict = true }: TypeIndexDocOptions) {
-    this.strict = strict
+  constructor () {
     this.solidTypes = {}
     this.otherQuads = []
+    this.documentTypes = []
+    this.references = []
   }
 
   /**
@@ -60,11 +58,11 @@ class TypeIndexDoc {
     return this.solidTypes[this._normalizedSubectId(subjectId)]
   }
 
-  deleteRule (solidType: SolidType) {
+  deleteType (solidType: SolidType) {
     const toDelete = solidType
 
     for (const subjectId of Object.keys(this.solidTypes)) {
-      this.deleteBySubjectId(subjectId, toDelete)
+      this.deleteBySubjectId(subjectId)
     }
 
     return this
@@ -91,7 +89,7 @@ class TypeIndexDoc {
       Object.entries(this.solidTypes)
         .every(([subjectId, solidType]) => {
           const otherRule = other.getTypeBySubjectId(subjectId)
-          return typeof otherRule !== 'undefined' && rule.equals(otherRule)
+          return typeof otherRule !== 'undefined' && solidType.equals(otherRule)
         })
   }
 
@@ -120,7 +118,7 @@ class TypeIndexDoc {
 
   _defaultSubjectIdForType (solidType: SolidType) {
     let id = '#'
-    if (solidType.typeClass) { id += solidType.typeClass.split("#")[1] }
+    if (solidType.forClass) { id += solidType.forClass.split("#")[1] }
     return id + '-'
   }
 }

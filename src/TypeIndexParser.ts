@@ -42,17 +42,36 @@ class TypeIndexParser {
     for (const [subjectId, quads] of Object.entries(data)) {
       if (this._isSolidType(quads)) {
         const SolidType = this._quadsToSolidType(quads)
-        doc.addType(SolidType, undefined, { subjectId })
+        doc.addType(SolidType, { subjectId })
       } else {
-        doc.addOther(...quads)
+        for (const quad of quads) {
+          this._addDocProperty(doc, quad)
+        }
       }
     }
 
     return doc
   }
 
+  _addDocProperty(doc: TypeIndexDoc, quad: N3.Quad) {
+    const { predicate, object: { value } } = quad
+
+    switch (predicate.id) {
+      case predicates.type:
+        doc.documentTypes.push(value)
+        break
+      case predicates.references:
+        doc.references.push(value)
+        break
+      default:
+        doc.addOther(quad)
+        break
+    }
+  }
+
   _quadsToSolidType (quads: N3.Quad[]) {
-    const solidType = new SolidType()
+	  // FIXME: class and instance should be read from the quads;
+    const solidType = new SolidType("", "")
 
     for (const quad of quads) {
       if (Object.values(predicates).includes(quad.predicate.id)) {
@@ -65,7 +84,8 @@ class TypeIndexParser {
   }
 
   _isSolidType (quads: N3.Quad[]) {
-	// FIXME: this assumes that the required predicates are forclass and instance; check what they actually are.
+	// FIXME: this assumes that the required predicates are forclass and instance;
+  // check what they actually are.
     const requiredPredicates = [
       [predicates.forClass],
       [predicates.instance]
@@ -78,12 +98,16 @@ class TypeIndexParser {
 
     switch (predicate.id) {
       case predicates.forClass:
-		solidType.typeClass = value
+    		solidType.forClass = value
         break
 
       case predicates.instance:
-        solidType.instance = value
+        solidType.instance = makeRelativeIfPossible(this.typeIndexUrl, value)
         break
+
+      case predicates.type:
+        // intentionally left blank.
+        break;
 
       default:
         throw new Error('Unexpected predicate: ' + predicate.id)
@@ -92,13 +116,31 @@ class TypeIndexParser {
 
   typeIndexDocToTurtle (doc: TypeIndexDoc): Promise<string> {
     const writer = new N3.Writer({ prefixes })
+    const { DataFactory: { quad, namedNode } } = N3
 
     /** @type {N3.Quad[]} */
     const quads = []
-    for (const [subjectId, solidType] of Object.entries(doc.types)) {
+    for (const [subjectId, solidType] of Object.entries(doc.solidTypes)) {
       const solidTypeQuads = this._solidTypeToQuads(subjectId, solidType)
       quads.push(...solidTypeQuads)
     }
+
+    for (const documentType of doc.documentTypes) {
+      quads.push(quad(
+        namedNode(this.typeIndexUrl),
+        namedNode(predicates.type),
+        namedNode(documentType)
+      ))
+    }
+
+    for (const reference of doc.references) {
+      quads.push(quad(
+        namedNode(this.typeIndexUrl),
+        namedNode(predicates.references),
+        namedNode(reference)
+      ))
+    }
+
     quads.push(...doc.otherQuads)
     writer.addQuads(quads)
 
@@ -115,7 +157,7 @@ class TypeIndexParser {
   _solidTypeToQuads (subjectId: string, solidType: SolidType) {
     const { DataFactory: { quad, namedNode } } = N3
     const quads = []
-    const relative = (url: string) => makeRelativeIfPossible(this.aclUrl, url)
+    const relative = (url: string) => makeRelativeIfPossible(this.typeIndexUrl, url)
 
     quads.push(quad(
       namedNode(subjectId),
@@ -128,18 +170,18 @@ class TypeIndexParser {
       quads.push(quad(
         namedNode(subjectId),
         namedNode(predicates.forClass),
-        namedNode(relative(solidType.typeClass))
+        namedNode(relative(solidType.forClass))
       ))
     }
 
     // instance
     if (solidType.instance) {
-		quads.push(quad(
-		  namedNode(subjectId),
-		  namedNode(predicates.instance),
-		  namedNode(relative(solidType.instance))
-		))
-	}
+      quads.push(quad(
+        namedNode(subjectId),
+        namedNode(predicates.instance),
+        namedNode(relative(solidType.instance))
+      ))
+    }
 
     quads.push(...solidType.otherQuads)
 
