@@ -6,9 +6,8 @@ A js library for working with typeindex files. It allows you to parse the turtle
 This example demonstrates how to parse a turtle string into an TypeIndexDoc object, then add a type entry and parse it back to turtle.
 
 ```javascript
-const SolidTypeIndexParser = require('SolicTypeIndexParser')
+const SolidTypeIndexParser = require('SolidTypeIndexParser')
 
-const webId = 'https://pod.example.org/profile/card#me'
 const typeIndexUrl = 'https://pod.example.org/settings/privateTypesIndex.ttl'
 const turtle = `
 @prefix : <#>.
@@ -26,12 +25,11 @@ async function main() {
   const doc = await parser.turtleToTypeIndexDoc(turtle)
 
   // Give the type to the type index
-  const type = {
-      name : "poddit",
-      class : "<http://www.w3.org/2002/01/bookmark#Bookmark>",
-      instance : "</public/poddit.ttl>"
+  const solidType = new SolidType(
+    "http://www.w3.org/2002/01/bookmark#Bookmark",
+    "/public/bookmarks.ttl");
   }
-  doc.addType(type)
+  doc.addType(solidType,{ subjectId: '#bookmarks' })
 
   // Parse it back to turtle so we can store it in the pod
   const newTurtle = await parser.typeIndexDocToTurtle(doc)
@@ -49,10 +47,10 @@ Output turtle
 
 <>
     a solid:ListedDocument, solid:TypeIndex;
-    terms:references :poddit.
+    terms:references :bookmarks.
 
-:poddit
+:bookmarks
     a solid:TypeRegistration;
     solid:forClass <http://www.w3.org/2002/01/bookmark#Bookmark>;
-    solid:instance </public/poddit.ttl>.
+    solid:instance </public/bookmarks.ttl>.
 ```
