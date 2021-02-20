@@ -15,6 +15,7 @@ interface TypeIndexParserOptions {
 const predicates = {
   forClass: `${prefixes.solid}forClass`,
   instance: `${prefixes.solid}instance`,
+  instanceContainer: `${prefixes.solid}instanceContainer`,
   references: `${prefixes.terms}references`,
   type: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
 }
@@ -71,7 +72,7 @@ class TypeIndexParser {
 
   _quadsToSolidType (quads: N3.Quad[]) {
 	  // FIXME: class and instance should be read from the quads;
-    const solidType = new SolidType("", "")
+    const solidType = new SolidType("")
 
     for (const quad of quads) {
       if (Object.values(predicates).includes(quad.predicate.id)) {
@@ -84,11 +85,9 @@ class TypeIndexParser {
   }
 
   _isSolidType (quads: N3.Quad[]) {
-	// FIXME: this assumes that the required predicates are forclass and instance;
-  // check what they actually are.
     const requiredPredicates = [
       [predicates.forClass],
-      [predicates.instance]
+      [predicates.instance, predicates.instanceContainer]
     ]
     return requiredPredicates.every(p => quads.some(({ predicate }) => p.includes(predicate.id)))
   }
@@ -103,6 +102,10 @@ class TypeIndexParser {
 
       case predicates.instance:
         solidType.instance = makeRelativeIfPossible(this.typeIndexUrl, value)
+        break
+
+      case predicates.instanceContainer:
+        solidType.instanceContainer = makeRelativeIfPossible(this.typeIndexUrl, value)
         break
 
       case predicates.type:
@@ -182,7 +185,15 @@ class TypeIndexParser {
         namedNode(relative(solidType.instance))
       ))
     }
-
+  
+    // instanceContainer
+    if (solidType.instanceContainer) {
+      quads.push(quad(
+        namedNode(subjectId),
+        namedNode(predicates.instanceContainer),
+        namedNode(relative(solidType.instanceContainer))
+      ))
+    }
     quads.push(...solidType.otherQuads)
 
     return quads
