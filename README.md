@@ -2,6 +2,9 @@
 
 A js library for working with typeindex files. It allows you to parse the turtle representation, update entries and finally convert it back to turtle. *It does not cover fetching typeindex files.*
 
+## Repo Link
+https://github.com/pdsinterop/solid-typeindex-parser
+ 
 ## Basic example
 This example demonstrates how to parse a turtle string into an TypeIndexDoc object, then add a type entry and parse it back to turtle.
 
