@@ -7,6 +7,10 @@
   ],
   "description": "A js library for parsing and modifying type index files",
   "homepage": "https://github.com/pdsinterop/solid-typeindex-parser/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pdsinterop/solid-typeindex-parser.git"
+  },
   "bugs": {
     "url": "https://github.com/pdsinterop/solid-typeindex-parser/issues"
   },
